@@ -1,0 +1,30 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "zkdatafactories"
+		},
+		"AzureKeyVault1_properties_typeProperties_baseUrl": {
+			"value": "https://zkvaults.vault.azure.net/"
+		},
+		"ls_adlsg_properties_typeProperties_url": {
+			"value": "https://zkadlsg.dfs.core.windows.net"
+		},
+		"ls_azuesql_db_properties_typeProperties_server": {
+			"value": "zkservers.database.windows.net"
+		},
+		"ls_azuesql_db_properties_typeProperties_database": {
+			"value": "@{linkedService().db_name}"
+		},
+		"ls_azuesql_db_properties_typeProperties_userName": {
+			"value": "zkadmin"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
