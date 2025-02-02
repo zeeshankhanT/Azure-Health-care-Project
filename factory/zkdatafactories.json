@@ -1,0 +1,9 @@
+{
+	"name": "zkdatafactories",
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "962a7585-c160-44c4-aee8-a0bf65c3f2f1",
+		"tenantId": "e41db350-be6b-43d5-81c6-15730499ac8a"
+	}
+}
