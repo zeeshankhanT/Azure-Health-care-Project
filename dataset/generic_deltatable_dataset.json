@@ -1,5 +1,5 @@
 {
-	"name": "AzureDatabricksDeltaLakeDataset1",
+	"name": "generic_deltatable_dataset",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "ls_deltalake",
