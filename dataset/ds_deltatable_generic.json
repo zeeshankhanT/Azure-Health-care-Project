@@ -1,5 +1,5 @@
 {
-	"name": "generic_deltatable_dataset",
+	"name": "ds_deltatable_generic",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "ls_deltalake",
