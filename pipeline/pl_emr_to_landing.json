@@ -85,7 +85,9 @@
 										}
 									}
 								},
-								"fieldList": [],
+								"fieldList": [
+									"exists"
+								],
 								"storeSettings": {
 									"type": "AzureBlobFSReadSettings",
 									"recursive": true,
@@ -109,6 +111,10 @@
 							],
 							"userProperties": [],
 							"typeProperties": {
+								"expression": {
+									"value": "@and(equals(activity('file_exists').output.exists,true),equals(item().isactive,'1'))",
+									"type": "Expression"
+								},
 								"ifTrueActivities": [
 									{
 										"name": "Archive",
