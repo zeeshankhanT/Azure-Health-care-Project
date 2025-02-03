@@ -799,7 +799,8 @@
 				"policy": {
 					"elapsedTimeMetric": {}
 				},
-				"annotations": []
+				"annotations": [],
+				"lastPublishTime": "2025-02-03T21:05:09Z"
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_adls_generic')]",
