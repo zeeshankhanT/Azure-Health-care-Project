@@ -247,7 +247,7 @@
 									"userProperties": [],
 									"typeProperties": {
 										"expression": {
-											"value": "@equals(item().loadtype,'Full' )",
+											"value": "@equals(item().loadtype,'Full')",
 											"type": "Expression"
 										},
 										"ifFalseActivities": [
@@ -422,7 +422,7 @@
 													"source": {
 														"type": "AzureSqlSource",
 														"sqlReaderQuery": {
-															"value": "@concat('select *,''',item().datasource,''' as  datasource from ',item().tablename)",
+															"value": "@concat('select * ,''',item().datasource,''' as  datasource from ',item().tablename)",
 															"type": "Expression"
 														},
 														"queryTimeout": "02:00:00",
@@ -453,15 +453,15 @@
 														"type": "DatasetReference",
 														"parameters": {
 															"schema_name": {
-																"value": "@item().database",
-																"type": "Expression"
-															},
-															"table_name": {
 																"value": "@split(item().tablename,'.')[0]",
 																"type": "Expression"
 															},
-															"db_name": {
+															"table_name": {
 																"value": "@split(item().tablename,'.')[1]",
+																"type": "Expression"
+															},
+															"db_name": {
+																"value": "@item().database",
 																"type": "Expression"
 															}
 														}
