@@ -182,7 +182,7 @@
 												"referenceName": "ds_adls_parq",
 												"type": "DatasetReference",
 												"parameters": {
-													"container": "bronce",
+													"container": "bronze",
 													"file_path": {
 														"value": "@concat(item().targetpath,'/archive/',formatDateTime(utcNow(),'yyyy'),'/',formatDateTime(utcNow(),'%M'),'/',formatDateTime(utcNow(),'%d'))",
 														"type": "Expression"
