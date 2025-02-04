@@ -20,6 +20,9 @@
 		"ls_azuesql_db_properties_typeProperties_userName": {
 			"value": "zkadmin"
 		},
+		"ls_databricks_properties_typeProperties_existingClusterId": {
+			"value": "0202-195711-ay5f8d3r"
+		},
 		"containerUri": {
 			"value": ""
 		},

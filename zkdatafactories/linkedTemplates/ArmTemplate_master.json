@@ -27,6 +27,10 @@
 			"type": "string",
 			"defaultValue": "zkadmin"
 		},
+		"ls_databricks_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0202-195711-ay5f8d3r"
+		},
 		"containerUri": {
 			"type": "string",
 			"metadata": "URI to storage account containing linked ARM templates"
@@ -68,6 +72,9 @@
 					},
 					"ls_azuesql_db_properties_typeProperties_userName": {
 						"value": "[parameters('ls_azuesql_db_properties_typeProperties_userName')]"
+					},
+					"ls_databricks_properties_typeProperties_existingClusterId": {
+						"value": "[parameters('ls_databricks_properties_typeProperties_existingClusterId')]"
 					}
 				}
 			},
