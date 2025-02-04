@@ -37,6 +37,329 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_copy_from_emr')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "If Condition2",
+						"type": "IfCondition",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@equals(pipeline().parameters.Load_Type, 'Full')",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [
+								{
+									"name": "fetch_logs",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureDatabricksDeltaLakeSource",
+											"query": {
+												"value": "@concat('select coalesce(cast(max(loaddate) as date),''','1900-01-01',''') as last_fetched_date from audit.load_logs where',' data_source=''',pipeline().parameters.datasource,''' and tablename=''',pipeline().parameters.tablename,'''')",
+												"type": "Expression"
+											}
+										},
+										"dataset": {
+											"referenceName": "ds_deltatable_generic",
+											"type": "DatasetReference",
+											"parameters": {
+												"schema_name": "'aa'",
+												"table_name": "'a'"
+											}
+										}
+									}
+								},
+								{
+									"name": "incremental_Load_CP",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "fetch_logs",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": {
+												"value": "@concat('select *,''',pipeline().parameters.datasource,''' as datasource from ',pipeline().parameters.tablename,' where ',pipeline().parameters.watermark,' >= ''',activity('fetch_logs').output.firstRow.last_fetched_date,'''')",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_azure_sql",
+											"type": "DatasetReference",
+											"parameters": {
+												"schema_name": {
+													"value": "@split(pipeline().parameters.tablename,'.')[0]",
+													"type": "Expression"
+												},
+												"table_name": {
+													"value": "@split(pipeline().parameters.tablename,'.')[1]",
+													"type": "Expression"
+												},
+												"db_name": {
+													"value": "pipeline().parameters.database",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_adls_parq",
+											"type": "DatasetReference",
+											"parameters": {
+												"container": "bronze",
+												"file_path": {
+													"value": "pipeline().parameters.targetpath",
+													"type": "Expression"
+												},
+												"file_name": {
+													"value": "@split(pipeline().parameters.tablename,'.')[1]",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "insert_logs_increm",
+									"type": "Lookup",
+									"dependsOn": [
+										{
+											"activity": "incremental_Load_CP",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureDatabricksDeltaLakeSource",
+											"query": {
+												"value": "@concat('insert into audit.load_logs(data_source,tablename,numberofrowscopied,watermarkcolumnname,loaddate) values (''',pipeline().parameters.datasource,''', ''',pipeline().parameters.tablename,''',''',activity('incremental_Load_CP').output.rowscopied,''',''',pipeline().parameters.watermark,''',''',utcNow(),''')')",
+												"type": "Expression"
+											}
+										},
+										"dataset": {
+											"referenceName": "ds_deltatable_generic",
+											"type": "DatasetReference",
+											"parameters": {
+												"schema_name": "'aa'",
+												"table_name": "'aa'"
+											}
+										}
+									}
+								}
+							],
+							"ifTrueActivities": [
+								{
+									"name": "full_load",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": {
+												"value": "@concat('select * ,''',pipeline().parameters.datasource,''' as  datasource from ',pipeline().parameters.tablename)",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_azure_sql",
+											"type": "DatasetReference",
+											"parameters": {
+												"schema_name": {
+													"value": "@split(pipeline().parameters.tablename,'.')[0]",
+													"type": "Expression"
+												},
+												"table_name": {
+													"value": "@split(pipeline().parameters.tablename,'.')[1]",
+													"type": "Expression"
+												},
+												"db_name": {
+													"value": "@pipeline().parameters.database",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_adls_parq",
+											"type": "DatasetReference",
+											"parameters": {
+												"container": "bronze",
+												"file_path": {
+													"value": "@pipeline().parameters.targetpath",
+													"type": "Expression"
+												},
+												"file_name": {
+													"value": "@split(pipeline().parameters.tablename,'.')[1]",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "insert_fullload_logs",
+									"type": "Lookup",
+									"dependsOn": [
+										{
+											"activity": "full_load",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureDatabricksDeltaLakeSource",
+											"query": {
+												"value": "@concat('insert into audit.load_logs(data_source,tablename,numberofrowscopied,watermarkcolumnname,loaddate) values (''',pipeline().parameters.datasource,''', ''', pipeline().parameters.tablename,''',''',activity('full_load').output.rowscopied,''',''',pipeline().parameters.watermark,''',''',utcNow(),''')')",
+												"type": "Expression"
+											}
+										},
+										"dataset": {
+											"referenceName": "ds_deltatable_generic",
+											"type": "DatasetReference",
+											"parameters": {
+												"schema_name": "'aa'",
+												"table_name": "'aa'"
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"Load_Type": {
+						"type": "string"
+					},
+					"database": {
+						"type": "string"
+					},
+					"tablename": {
+						"type": "string"
+					},
+					"datasource": {
+						"type": "string"
+					},
+					"targetpath": {
+						"type": "string"
+					},
+					"watermark": {
+						"type": "string"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_deltatable_generic')]",
+				"[concat(variables('factoryId'), '/datasets/ds_azure_sql')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_parq')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_emr_to_landing')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -153,7 +476,7 @@
 									"userProperties": [],
 									"typeProperties": {
 										"expression": {
-											"value": "@and(equals(activity('file_exists').output.exists,true),equals(item().isactive,'1'))",
+											"value": "@and(equals(activity('file_exists').output.exists,true),equals(item().is_active,'1'))",
 											"type": "Expression"
 										},
 										"ifTrueActivities": [
@@ -614,620 +937,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_adls_generic')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_adlsg",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"container": {
-						"type": "string"
-					},
-					"file_path": {
-						"type": "string"
-					},
-					"file_name": {
-						"type": "string"
-					}
-				},
-				"annotations": [],
-				"type": "DelimitedText",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"fileName": {
-							"value": "@dataset().file_name",
-							"type": "Expression"
-						},
-						"folderPath": {
-							"value": "@dataset().file_path",
-							"type": "Expression"
-						},
-						"fileSystem": {
-							"value": "@dataset().container",
-							"type": "Expression"
-						}
-					},
-					"columnDelimiter": ",",
-					"escapeChar": "\\",
-					"firstRowAsHeader": true,
-					"quoteChar": "\""
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_adlsg')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_adls_parq')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_adlsg",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"container": {
-						"type": "string"
-					},
-					"file_path": {
-						"type": "string"
-					},
-					"file_name": {
-						"type": "string"
-					}
-				},
-				"annotations": [],
-				"type": "Parquet",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobFSLocation",
-						"fileName": {
-							"value": "@dataset().file_name",
-							"type": "Expression"
-						},
-						"folderPath": {
-							"value": "@dataset().file_path",
-							"type": "Expression"
-						},
-						"fileSystem": {
-							"value": "@dataset().container",
-							"type": "Expression"
-						}
-					},
-					"compressionCodec": "snappy"
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_adlsg')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_azure_sql')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_azuesql_db",
-					"type": "LinkedServiceReference",
-					"parameters": {
-						"db_name": {
-							"value": "@dataset().db_name",
-							"type": "Expression"
-						}
-					}
-				},
-				"parameters": {
-					"schema_name": {
-						"type": "string"
-					},
-					"table_name": {
-						"type": "string"
-					},
-					"db_name": {
-						"type": "string"
-					}
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [],
-				"typeProperties": {
-					"schema": {
-						"value": "@dataset().schema_name",
-						"type": "Expression"
-					},
-					"table": {
-						"value": "@dataset().table_name",
-						"type": "Expression"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_azuesql_db')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ds_deltatable_generic')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_deltalake",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"schema_name": {
-						"type": "string"
-					},
-					"table_name": {
-						"type": "string"
-					}
-				},
-				"annotations": [],
-				"type": "AzureDatabricksDeltaLakeDataset",
-				"typeProperties": {
-					"database": {
-						"value": "@dataset().schema_name",
-						"type": "Expression"
-					},
-					"table": {
-						"value": "@dataset().table_name",
-						"type": "Expression"
-					}
-				},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_deltalake')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/AzureKeyVault1')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureKeyVault",
-				"typeProperties": {
-					"baseUrl": "[parameters('AzureKeyVault1_properties_typeProperties_baseUrl')]"
-				}
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ls_adlsg')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureBlobFS",
-				"typeProperties": {
-					"url": "[parameters('ls_adlsg_properties_typeProperties_url')]",
-					"accountKey": {
-						"type": "AzureKeyVaultSecret",
-						"store": {
-							"referenceName": "AzureKeyVault1",
-							"type": "LinkedServiceReference"
-						},
-						"secretName": "adlsg2"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureKeyVault1')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ls_azuesql_db')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"parameters": {
-					"db_name": {
-						"type": "string"
-					}
-				},
-				"annotations": [],
-				"type": "AzureSqlDatabase",
-				"typeProperties": {
-					"server": "[parameters('ls_azuesql_db_properties_typeProperties_server')]",
-					"database": "[parameters('ls_azuesql_db_properties_typeProperties_database')]",
-					"encrypt": "mandatory",
-					"trustServerCertificate": false,
-					"authenticationType": "SQL",
-					"userName": "[parameters('ls_azuesql_db_properties_typeProperties_userName')]",
-					"password": {
-						"type": "AzureKeyVaultSecret",
-						"store": {
-							"referenceName": "AzureKeyVault1",
-							"type": "LinkedServiceReference"
-						},
-						"secretName": "zkazuresql"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureKeyVault1')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ls_deltalake')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureDatabricksDeltaLake",
-				"typeProperties": {
-					"domain": "https://adb-653970902106371.11.azuredatabricks.net",
-					"clusterId": "0202-195711-ay5f8d3r",
-					"accessToken": {
-						"type": "AzureKeyVaultSecret",
-						"store": {
-							"referenceName": "AzureKeyVault1",
-							"type": "LinkedServiceReference"
-						},
-						"secretName": "databricksdelta"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureKeyVault1')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ls_databricks')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureDatabricks",
-				"typeProperties": {
-					"domain": "https://adb-653970902106371.11.azuredatabricks.net",
-					"accessToken": {
-						"type": "AzureKeyVaultSecret",
-						"store": {
-							"referenceName": "AzureKeyVault1",
-							"type": "LinkedServiceReference"
-						},
-						"secretName": "databricksdelta"
-					},
-					"existingClusterId": "[parameters('ls_databricks_properties_typeProperties_existingClusterId')]"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureKeyVault1')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/pl_copy_from_emr')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "If Condition2",
-						"type": "IfCondition",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"expression": {
-								"value": "@equals(pipeline().parameters.Load_Type, 'Full')",
-								"type": "Expression"
-							},
-							"ifFalseActivities": [
-								{
-									"name": "fetch_logs",
-									"type": "Lookup",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "AzureDatabricksDeltaLakeSource",
-											"query": {
-												"value": "@concat('select coalesce(cast(max(loaddate) as date),''','1900-01-01',''') as last_fetched_date from audit.load_logs where',' data_source=''',pipeline().parameters.datasource,''' and tablename=''',pipeline().parameters.tablename,'''')",
-												"type": "Expression"
-											}
-										},
-										"dataset": {
-											"referenceName": "ds_deltatable_generic",
-											"type": "DatasetReference",
-											"parameters": {
-												"schema_name": "'aa'",
-												"table_name": "'a'"
-											}
-										}
-									}
-								},
-								{
-									"name": "incremental_Load_CP",
-									"type": "Copy",
-									"dependsOn": [
-										{
-											"activity": "fetch_logs",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "AzureSqlSource",
-											"sqlReaderQuery": {
-												"value": "@concat('select *,''',pipeline().parameters.datasource,''' as datasource from ',pipeline().parameters.tablename,' where ',pipeline().parameters.watermark,' >= ''',activity('fetch_logs').output.firstRow.last_fetched_date,'''')",
-												"type": "Expression"
-											},
-											"queryTimeout": "02:00:00",
-											"partitionOption": "None"
-										},
-										"sink": {
-											"type": "ParquetSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "ParquetWriteSettings"
-											}
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "ds_azure_sql",
-											"type": "DatasetReference",
-											"parameters": {
-												"schema_name": {
-													"value": "@split(pipeline().parameters.tablename,'.')[0]",
-													"type": "Expression"
-												},
-												"table_name": {
-													"value": "@split(pipeline().parameters.tablename,'.')[1]",
-													"type": "Expression"
-												},
-												"db_name": {
-													"value": "pipeline().parameters.database",
-													"type": "Expression"
-												}
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "ds_adls_parq",
-											"type": "DatasetReference",
-											"parameters": {
-												"container": "bronze",
-												"file_path": {
-													"value": "pipeline().parameters.targetpath",
-													"type": "Expression"
-												},
-												"file_name": {
-													"value": "@split(pipeline().parameters.tablename,'.')[1]",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								},
-								{
-									"name": "insert_logs_increm",
-									"type": "Lookup",
-									"dependsOn": [
-										{
-											"activity": "incremental_Load_CP",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "AzureDatabricksDeltaLakeSource",
-											"query": {
-												"value": "@concat('insert into audit.load_logs(data_source,tablename,numberofrowscopied,watermarkcolumnname,loaddate) values (''',pipeline().parameters.datasource,''', ''',pipeline().parameters.tablename,''',''',activity('incremental_Load_CP').output.rowscopied,''',''',pipeline().parameters.watermark,''',''',utcNow(),''')')",
-												"type": "Expression"
-											}
-										},
-										"dataset": {
-											"referenceName": "ds_deltatable_generic",
-											"type": "DatasetReference",
-											"parameters": {
-												"schema_name": "'aa'",
-												"table_name": "'aa'"
-											}
-										}
-									}
-								}
-							],
-							"ifTrueActivities": [
-								{
-									"name": "full_load",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "AzureSqlSource",
-											"sqlReaderQuery": {
-												"value": "@concat('select * ,''',pipeline().parameters.datasource,''' as  datasource from ',pipeline().parameters.tablename)",
-												"type": "Expression"
-											},
-											"queryTimeout": "02:00:00",
-											"partitionOption": "None"
-										},
-										"sink": {
-											"type": "ParquetSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "ParquetWriteSettings"
-											}
-										},
-										"enableStaging": false,
-										"translator": {
-											"type": "TabularTranslator",
-											"typeConversion": true,
-											"typeConversionSettings": {
-												"allowDataTruncation": true,
-												"treatBooleanAsNumber": false
-											}
-										}
-									},
-									"inputs": [
-										{
-											"referenceName": "ds_azure_sql",
-											"type": "DatasetReference",
-											"parameters": {
-												"schema_name": {
-													"value": "@split(pipeline().parameters.tablename,'.')[0]",
-													"type": "Expression"
-												},
-												"table_name": {
-													"value": "@split(pipeline().parameters.tablename,'.')[1]",
-													"type": "Expression"
-												},
-												"db_name": {
-													"value": "@pipeline().parameters.database",
-													"type": "Expression"
-												}
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "ds_adls_parq",
-											"type": "DatasetReference",
-											"parameters": {
-												"container": "bronze",
-												"file_path": {
-													"value": "@pipeline().parameters.targetpath",
-													"type": "Expression"
-												},
-												"file_name": {
-													"value": "@split(pipeline().parameters.tablename,'.')[1]",
-													"type": "Expression"
-												}
-											}
-										}
-									]
-								},
-								{
-									"name": "insert_fullload_logs",
-									"type": "Lookup",
-									"dependsOn": [
-										{
-											"activity": "full_load",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "AzureDatabricksDeltaLakeSource",
-											"query": {
-												"value": "@concat('insert into audit.load_logs(data_source,tablename,numberofrowscopied,watermarkcolumnname,loaddate) values (''',pipeline().parameters.datasource,''', ''', pipeline().parameters.tablename,''',''',activity('full_load').output.rowscopied,''',''',pipeline().parameters.watermark,''',''',utcNow(),''')')",
-												"type": "Expression"
-											}
-										},
-										"dataset": {
-											"referenceName": "ds_deltatable_generic",
-											"type": "DatasetReference",
-											"parameters": {
-												"schema_name": "'aa'",
-												"table_name": "'aa'"
-											}
-										}
-									}
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"parameters": {
-					"Load_Type": {
-						"type": "string"
-					},
-					"database": {
-						"type": "string"
-					},
-					"tablename": {
-						"type": "string"
-					},
-					"datasource": {
-						"type": "string"
-					},
-					"targetpath": {
-						"type": "string"
-					},
-					"watermark": {
-						"type": "string"
-					}
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_deltatable_generic')]",
-				"[concat(variables('factoryId'), '/datasets/ds_azure_sql')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_parq')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/pl_end_to_end')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1668,6 +1377,297 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/ls_databricks')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_generic')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_adlsg",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"container": {
+						"type": "string"
+					},
+					"file_path": {
+						"type": "string"
+					},
+					"file_name": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().file_name",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().file_path",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().container",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_adlsg')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_parq')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_adlsg",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"container": {
+						"type": "string"
+					},
+					"file_path": {
+						"type": "string"
+					},
+					"file_name": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().file_name",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().file_path",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().container",
+							"type": "Expression"
+						}
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_adlsg')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_azure_sql')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_azuesql_db",
+					"type": "LinkedServiceReference",
+					"parameters": {
+						"db_name": {
+							"value": "@dataset().db_name",
+							"type": "Expression"
+						}
+					}
+				},
+				"parameters": {
+					"schema_name": {
+						"type": "string"
+					},
+					"table_name": {
+						"type": "string"
+					},
+					"db_name": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().schema_name",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().table_name",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_azuesql_db')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_deltatable_generic')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_deltalake",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"schema_name": {
+						"type": "string"
+					},
+					"table_name": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureDatabricksDeltaLakeDataset",
+				"typeProperties": {
+					"database": {
+						"value": "@dataset().schema_name",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().table_name",
+						"type": "Expression"
+					}
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_deltalake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureKeyVault1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureKeyVault",
+				"typeProperties": {
+					"baseUrl": "[parameters('AzureKeyVault1_properties_typeProperties_baseUrl')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_adlsg')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('ls_adlsg_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "AzureKeyVault1",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "adlsg2"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureKeyVault1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_azuesql_db')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"parameters": {
+					"db_name": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('ls_azuesql_db_properties_typeProperties_server')]",
+					"database": "[parameters('ls_azuesql_db_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SQL",
+					"userName": "[parameters('ls_azuesql_db_properties_typeProperties_userName')]",
+					"password": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "AzureKeyVault1",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "zkazuresql"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureKeyVault1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_databricks')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-653970902106371.11.azuredatabricks.net",
+					"accessToken": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "AzureKeyVault1",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "databricksdelta"
+					},
+					"existingClusterId": "[parameters('ls_databricks_properties_typeProperties_existingClusterId')]"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureKeyVault1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_deltalake')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricksDeltaLake",
+				"typeProperties": {
+					"domain": "https://adb-653970902106371.11.azuredatabricks.net",
+					"clusterId": "0202-195711-ay5f8d3r",
+					"accessToken": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "AzureKeyVault1",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "databricksdelta"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureKeyVault1')]"
 			]
 		}
 	]
