@@ -745,7 +745,7 @@
 										"source": {
 											"type": "AzureDatabricksDeltaLakeSource",
 											"query": {
-												"value": "@concat('select coalesce(cast(max(loaddate) as date),''','1900-01-01',''') as last_fetched_date from audit.load_logs where',' data_source=''',pipeline().parameters.datasource,''' and tablename=''',pipeline().parameters.tablename,'''')",
+												"value": "@concat('select coalesce(cast(max(loaddate) as date),''','1900-01-01',''') as last_fetched_date from zk_hc_adb_ws.audit.load_logs where',' data_source=''',pipeline().parameters.datasource,''' and tablename=''',pipeline().parameters.tablename,'''')",
 												"type": "Expression"
 											}
 										},
@@ -868,7 +868,7 @@
 										"source": {
 											"type": "AzureDatabricksDeltaLakeSource",
 											"query": {
-												"value": "@concat('insert into audit.load_logs(data_source,tablename,numberofrowscopied,watermarkcolumnname,loaddate) values (''',pipeline().parameters.datasource,''', ''',pipeline().parameters.tablename,''',''',activity('incremental_Load_CP').output.rowscopied,''',''',pipeline().parameters.watermark,''',''',utcNow(),''')')",
+												"value": "@concat('insert into zk_hc_adb_ws.audit.load_logs(data_source,tablename,numberofrowscopied,watermarkcolumnname,loaddate) values (''',pipeline().parameters.datasource,''', ''',pipeline().parameters.tablename,''',''',activity('incremental_Load_CP').output.rowscopied,''',''',pipeline().parameters.watermark,''',''',utcNow(),''')')",
 												"type": "Expression"
 											}
 										},
@@ -986,7 +986,7 @@
 										"source": {
 											"type": "AzureDatabricksDeltaLakeSource",
 											"query": {
-												"value": "@concat('insert into audit.load_logs(data_source,tablename,numberofrowscopied,watermarkcolumnname,loaddate) values (''',pipeline().parameters.datasource,''', ''', pipeline().parameters.tablename,''',''',activity('full_load').output.rowscopied,''',''',pipeline().parameters.watermark,''',''',utcNow(),''')')",
+												"value": "@concat('insert into zk_hc_adb_ws.audit.load_logs(data_source,tablename,numberofrowscopied,watermarkcolumnname,loaddate) values (''',pipeline().parameters.datasource,''', ''', pipeline().parameters.tablename,''',''',activity('full_load').output.rowscopied,''',''',pipeline().parameters.watermark,''',''',utcNow(),''')')",
 												"type": "Expression"
 											}
 										},
