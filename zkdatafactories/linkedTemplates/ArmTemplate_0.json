@@ -328,6 +328,391 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_silver_to_gold')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "cpt_silver",
+						"type": "DatabricksNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/3. Silver/CPT code"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "cpt_gold",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "cpt_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/4. Gold/dim_cpt_code"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "dept_silver",
+						"type": "DatabricksNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/3. Silver/Departments_F"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "dept_gold",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "dept_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/4. Gold/dim_department"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "icd_silver",
+						"type": "DatabricksNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/3. Silver/ICD Code"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "icd_gold",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "icd_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/4. Gold/dim_icd_code"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "enc_silver",
+						"type": "DatabricksNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/3. Silver/Encounters"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "clm_silver",
+						"type": "DatabricksNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/3. Silver/claims"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "npi_silver",
+						"type": "DatabricksNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/3. Silver/NPI"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "npi_gold",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "npi_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/4. Gold/dim_npi"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "pat_silver",
+						"type": "DatabricksNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/3. Silver/Patient"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "pat_gold",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "pat_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/4. Gold/dim_patient"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "prov_silver",
+						"type": "DatabricksNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/3. Silver/Providers_F"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "prov_gold",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "prov_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/4. Gold/dim_provider"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "tran_silver",
+						"type": "DatabricksNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/3. Silver/Transactions"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "tran_gold",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "tran_silver",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/idkwaticando@gmail.com/Azure Health Care Project/4. Gold/fact_transaction"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_databricks')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_copy_from_emr')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1225,6 +1610,64 @@
 				"[concat(variables('factoryId'), '/datasets/ds_deltatable_generic')]",
 				"[concat(variables('factoryId'), '/datasets/ds_azure_sql')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_copy_from_emr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_end_to_end')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Execute Pipeline emr",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "pl_emr_to_landing",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					},
+					{
+						"name": "silver_to_gold",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Execute Pipeline emr",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "pl_silver_to_gold",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_emr_to_landing')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_silver_to_gold')]"
 			]
 		}
 	]
