@@ -1,0 +1,9 @@
+{
+	"name": "zkdatafact",
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "acb28fa7-0d69-4c97-907f-a2d4734c3bf1",
+		"tenantId": "3369a8ac-5826-462d-831b-2f90586b7750"
+	}
+}
