@@ -1,9 +1,9 @@
 {
 	"name": "zkdatafact",
-	"location": "centralindia",
+	"location": "eastus",
 	"identity": {
 		"type": "SystemAssigned",
-		"principalId": "acb28fa7-0d69-4c97-907f-a2d4734c3bf1",
-		"tenantId": "3369a8ac-5826-462d-831b-2f90586b7750"
+		"principalId": "7c86562b-4c1f-47dd-84a9-c6f87b56eab4",
+		"tenantId": "e8bf5651-8c0c-4fa2-875a-bd6e9f87f47d"
 	}
 }
