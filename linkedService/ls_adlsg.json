@@ -1,11 +1,10 @@
 {
 	"name": "ls_adlsg",
-	"type": "Microsoft.DataFactory/factories/linkedservices",
 	"properties": {
 		"annotations": [],
 		"type": "AzureBlobFS",
 		"typeProperties": {
-			"url": "https://zkadlsg.dfs.core.windows.net",
+			"url": "https://zkstorage.dfs.core.windows.net/",
 			"accountKey": {
 				"type": "AzureKeyVaultSecret",
 				"store": {
@@ -15,5 +14,6 @@
 				"secretName": "adlsg2"
 			}
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/linkedservices"
 }
