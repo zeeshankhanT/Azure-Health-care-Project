@@ -1,6 +1,5 @@
 {
 	"name": "ls_azuesql_db",
-	"type": "Microsoft.DataFactory/factories/linkedservices",
 	"properties": {
 		"parameters": {
 			"db_name": {
@@ -15,7 +14,7 @@
 			"encrypt": "mandatory",
 			"trustServerCertificate": false,
 			"authenticationType": "SQL",
-			"userName": "zkadmin",
+			"userName": "zkdb",
 			"password": {
 				"type": "AzureKeyVaultSecret",
 				"store": {
@@ -25,5 +24,6 @@
 				"secretName": "zkazuresql"
 			}
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/linkedservices"
 }
