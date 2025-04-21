@@ -1,12 +1,11 @@
 {
 	"name": "ls_deltalake",
-	"type": "Microsoft.DataFactory/factories/linkedservices",
 	"properties": {
 		"annotations": [],
 		"type": "AzureDatabricksDeltaLake",
 		"typeProperties": {
-			"domain": "https://adb-653970902106371.11.azuredatabricks.net",
-			"clusterId": "0202-195711-ay5f8d3r",
+			"domain": "https://adb-2374812150587227.7.azuredatabricks.net",
+			"clusterId": "0418-141406-9kewle",
 			"accessToken": {
 				"type": "AzureKeyVaultSecret",
 				"store": {
@@ -16,5 +15,6 @@
 				"secretName": "databricksdelta"
 			}
 		}
-	}
+	},
+	"type": "Microsoft.DataFactory/factories/linkedservices"
 }
