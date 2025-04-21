@@ -289,7 +289,7 @@
 			}
 		],
 		"parameters": {
-			"Load_Type": {
+			"loadtype": {
 				"type": "string"
 			},
 			"database": {
