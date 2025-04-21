@@ -9,7 +9,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@equals(pipeline().parameters.Load_Type, 'Full')",
+						"value": "@equals(pipeline().parameters.Load_Type,'Full')",
 						"type": "Expression"
 					},
 					"ifFalseActivities": [
@@ -289,7 +289,7 @@
 			}
 		],
 		"parameters": {
-			"loadtype": {
+			"load_Type": {
 				"type": "string"
 			},
 			"database": {
