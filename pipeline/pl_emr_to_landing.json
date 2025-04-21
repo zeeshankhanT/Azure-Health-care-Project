@@ -525,10 +525,6 @@
 											},
 											"waitOnCompletion": true,
 											"parameters": {
-												"Load_Type": {
-													"value": "@item().loadtype",
-													"type": "Expression"
-												},
 												"database": {
 													"value": "@item().database",
 													"type": "Expression"
