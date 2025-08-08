@@ -1,0 +1,9 @@
+{
+	"name": "zkhospro",
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "2c32cacf-5e77-4f78-8cf5-b36df75dfc3e",
+		"tenantId": "26b7c784-c79a-4a52-9bc3-540b0cdb4c0b"
+	}
+}
