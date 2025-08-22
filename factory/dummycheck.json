@@ -1,0 +1,9 @@
+{
+	"name": "dummycheck",
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "385b3e7a-a30c-4e01-9588-1807ef6d1cf6",
+		"tenantId": "26b7c784-c79a-4a52-9bc3-540b0cdb4c0b"
+	}
+}
