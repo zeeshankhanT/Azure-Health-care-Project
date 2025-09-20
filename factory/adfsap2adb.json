@@ -1,0 +1,9 @@
+{
+	"name": "adfsap2adb",
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "b645de8d-d9c7-4b75-88d5-0dd270a22ce0",
+		"tenantId": "bdcfaa46-3f69-4dfd-b3f7-c582bdfbb820"
+	}
+}
